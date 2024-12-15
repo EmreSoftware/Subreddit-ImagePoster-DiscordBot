@@ -3,5 +3,7 @@
   "reddit_client_id": "",
   "reddit_client_secret": "",
   "reddit_user_agent": "",
-  "target_channel_id": 
+  "channel": ,
+  "subreddit_name": "",
+  "interval_hours": 
 }
