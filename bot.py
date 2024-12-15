@@ -149,7 +149,7 @@ atexit.register(lambda: save_sent_images(load_sent_images()))
 @tasks.loop(hours=25)
 async def auto_fetch_images():
     """Automatically fetch and send images every 25 hours."""
-    await fetch_and_send_images(SUBREDDIT_NAME)  # Replace with your subreddit name
+    await fetch_and_send_images(SUBREDDIT_NAME)
 
 # Start the task when the bot is ready
 @client.event
