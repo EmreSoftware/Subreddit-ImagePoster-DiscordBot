@@ -30,7 +30,8 @@ client = commands.Bot(command_prefix='.', intents=intents)
 # File to store sent image URLs
 SENT_IMAGES_FILE = 'sent_images.txt'
 DOWNLOAD_FOLDER = 'downloaded_images'
-your_channel_id = 1317847595565191248
+SUBREDDIT_NAME = config['subreddit_name']
+your_channel_id = config['channel']
 
 # Ensure the download folder exists
 if not os.path.exists(DOWNLOAD_FOLDER):
@@ -80,41 +81,59 @@ async def fetch_and_send_images(subreddit_name: str):
         sent_count = 0
         for post in posts:
             if post.url not in sent_images and sent_count < 50:  # Allow up to 50 images
-                # Download the image
-                image_data = requests.get(post.url).content
+                try:
+                    # Download the image
+                    image_data = requests.get(post.url).content
 
-                # Save the image to the disk in the DOWNLOAD_FOLDER
-                image_name = os.path.basename(post.url)  # Use the image filename from URL
-                image_path = os.path.join(DOWNLOAD_FOLDER, image_name)
+                    # Save the image to disk in the DOWNLOAD_FOLDER
+                    image_name = os.path.basename(post.url)  # Use the image filename from URL
+                    image_path = os.path.join(DOWNLOAD_FOLDER, image_name)
 
-                with open(image_path, 'wb') as f:
-                    f.write(image_data)
+                    with open(image_path, 'wb') as f:
+                        f.write(image_data)
 
-                # Create an embed with the image and other details
-                embed = discord.Embed(
-                    title=post.title,
-                    description=f"**Author:** u/{post.author.name}",
-                    url=post.url,
-                    color=discord.Color.pink()
-                )
+                    # Check file size
+                    if os.path.getsize(image_path) > 8 * 1024 * 1024:  # 8 MB limit
+                        print(f"Skipping upload for {image_name} as it exceeds the 8 MB limit. Sending embed only.")
 
-                # Send the embed and image to Discord
-                with open(image_path, 'rb') as f:
-                    await client.get_channel(your_channel_id).send(
-                        embed=embed,
-                        file=discord.File(f, image_name)
-                    )  # Replace with your channel ID
+                        # Send only the embed with the image URL
+                        embed = discord.Embed(
+                            title=post.title,
+                            description=f"**Author:** u/{post.author.name}\n*(File too large to upload)*",
+                            url=post.url,
+                            color=discord.Color.pink()
+                        )
+                        embed.set_image(url=post.url)  # Directly link the image URL
+                        await client.get_channel(your_channel_id).send(embed=embed)
 
-                # Mark this image as sent
-                print(f"Marking image as sent: {post.url}")  # Debugging
-                sent_images.add(post.url)
-                sent_count += 1
+                    else:
+                        # Create an embed for the image
+                        embed = discord.Embed(
+                            title=post.title,
+                            description=f"**Author:** u/{post.author.name}",
+                            url=post.url,
+                            color=discord.Color.pink()
+                        )
 
-                # Save the sent URLs frequently
-                save_sent_images(sent_images)
+                        # Send the embed and the file
+                        with open(image_path, 'rb') as f:
+                            await client.get_channel(your_channel_id).send(
+                                embed=embed,
+                                file=discord.File(f, image_name)
+                            )
 
-                # Delete the local image after sending it
-                os.remove(image_path)
+                    # Mark this image as sent and save
+                    sent_images.add(post.url)
+                    save_sent_images(sent_images)  # Save after processing each image
+                    sent_count += 1
+
+                except Exception as e:
+                    print(f"An error occurred while processing {image_name}: {e}")
+
+                finally:
+                    # Always delete the local image file
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
 
         if sent_count < 50:
             await client.get_channel(your_channel_id).send(f"Found less than 50 unique image posts in r/{subreddit_name}.")
@@ -130,7 +149,7 @@ atexit.register(lambda: save_sent_images(load_sent_images()))
 @tasks.loop(hours=25)
 async def auto_fetch_images():
     """Automatically fetch and send images every 25 hours."""
-    await fetch_and_send_images('pics')  # Replace with your subreddit name
+    await fetch_and_send_images(SUBREDDIT_NAME)  # Replace with your subreddit name
 
 # Start the task when the bot is ready
 @client.event
