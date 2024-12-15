@@ -15,6 +15,7 @@ TOKEN = config['token']
 REDDIT_CLIENT_ID = config['reddit_client_id']
 REDDIT_CLIENT_SECRET = config['reddit_client_secret']
 REDDIT_USER_AGENT = config['reddit_user_agent']
+INTERVAL_HOURS = config['interval_hours']
 
 # Initialize PRAW
 reddit = praw.Reddit(
@@ -146,10 +147,10 @@ async def fetch_and_send_images(subreddit_name: str):
 atexit.register(lambda: save_sent_images(load_sent_images()))
 
 # Background task to run every 25 hours
-@tasks.loop(hours=25)
+@tasks.loop(hours=INTERVAL_HOURS)
 async def auto_fetch_images():
     """Automatically fetch and send images every 25 hours."""
-    await fetch_and_send_images(SUBREDDIT_NAME)
+    await fetch_and_send_images(SUBREDDIT_NAME)  # Replace with your subreddit name
 
 # Start the task when the bot is ready
 @client.event
