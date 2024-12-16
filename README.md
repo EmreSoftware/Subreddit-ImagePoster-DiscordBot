@@ -29,3 +29,6 @@ Duplicate Prevention:
 Feel free to improve the code!
 
 I’m not great at Python and didn’t invest much time polishing this project. If it worked, I left it as is—so contributions are more than welcome!
+
+## License
+GPL-3.0
