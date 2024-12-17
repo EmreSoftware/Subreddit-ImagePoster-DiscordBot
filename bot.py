@@ -1,6 +1,6 @@
 """
     Posts the top images from a specific subreddit to a designated Discord channel at regular intervals
-    Copyright (C) 2024  Emre
+    Copyright (C) 2024  EmreSoftware
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
